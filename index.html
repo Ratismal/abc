@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>abc calculator</title>
+  <style>
+    .assignment,
+    .branch,
+    .condition {
+      padding: 2px 2px;
+      margin: 0 2px;
+    }
+
+    .assignment {
+      background: #8dff8b;
+    }
+
+    .branch {
+      background: #ff9ffa;
+    }
+
+    .condition {
+      background: #fff788;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app">
+    <p>input</p>
+    <textarea v-model="code" rows="10" cols="80"></textarea>
+    <button @click.prevent="calculate">calculate</button>
+    <p><span class="metric assignment">Assignments</span>: <span class='value'>{{ stats.a }}</span></p>
+    <p><span class="metric branch">Branches</span>: <span class='value'>{{ stats.b }}</span></p>
+    <p><span class="metric condition">Conditions</span>: <span class='value'>{{ stats.c }}</span></p>
+    <p><span class="metric">Score</span>: <span class='value'>{{ score }}</span></p>
+
+    <div>
+      <pre><code v-html="formatted"></code></pre>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+  <script>
+    const app = new Vue({
+      el: '#app',
+      data() {
+        return {
+          code: '',
+          stats: {
+            a: 0,
+            b: 0,
+            c: 0,
+          },
+          formatted: ''
+        };
+      },
+      computed: {
+        score() {
+          return Math.sqrt(this.stats.a ** 2 + this.stats.b ** 2 + this.stats.c ** 2);
+        }
+      },
+      methods: {
+        calculate() {
+          this.stats.a = this.count(/\s((?:\*|\/|\%|\+|-|&|\||>>|<<|>>>)?=)\s/g);
+          this.stats.a += this.count(/\+\+|--/g);
+
+          this.stats.b = 0;
+
+          this.stats.b += this.count(/(\[|[^.]\.\w+)/g);
+          this.stats.b += this.count(/\s(do)\s/g);
+          this.stats.b += this.count(/\w\s*(\{)/g);
+
+          this.stats.c = this.count(/(\s)(if|else|unless|case|==|!=|<=|>=|<|>|\?|is|and|or|&&|\|\|)(\s)/g);
+
+          this.format();
+        },
+        format() {
+          this.formatted = this.code;
+
+          this.replace(/(\s)((?:\*|\/|\%|\+|-|&|\||>>|<<|>>>)?=)(\s)/g, 'assignment');
+          this.replace(/()(\+\+|--)()/g, 'assignment');
+
+          this.replace(/([^.])(\[|\.)([^.])/g, 'branch');
+          this.replace(/(\s)(do)(\s)/g, 'branch');
+          this.replace(/(\w\s*)(\{)()/g, 'branch');
+
+          this.replace(/(\s)(if|else|unless|case|==|!=|<=|>=|<|>|\?|is|and|or|&&|\|\|)(\s)/g, 'condition');
+        },
+        replace(reg, type) {
+          this.formatted = this.formatted.replace(reg, `$1<span class="${type}">$2</span>$3`)
+        },
+        count(str) {
+          console.log(this.code.match(str));
+          return (this.code.match(str) || []).length
+        }
+      }
+    })
+  </script>
+</body>
+
+</html>
